@@ -1,0 +1,1 @@
+# lib-wallet-pricing-bitfinex-http
