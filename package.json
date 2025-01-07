@@ -20,6 +20,6 @@
   },
   "peerDependencies": {
     "axios": "*",
-    "lib-wallet-pricing-provider": "github:noxtton/lib-wallet-pricing-provider"
+    "lib-wallet-pricing-provider": "github:tetherto/lib-wallet-pricing-provider"
   }
 }
