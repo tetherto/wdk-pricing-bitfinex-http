@@ -1,7 +1,7 @@
 'use strict'
 
 import axios from 'axios'
-import { PricingClient } from 'wdk-lib-pricing'
+import { PricingClient } from 'lib-wallet-pricing-provider'
 
 export class BitfinexPricingClient extends PricingClient {
   HISTORICAL_DATA_AGE = 365 * 24 * 60 * 60000
@@ -38,7 +38,10 @@ export class BitfinexPricingClient extends PricingClient {
    * @returns {Promise<HistoricalPriceResult[]>}
    */
   async getHistoricalPrice (opts) {
-    if (opts.start && opts.start < new Date().getTime() - this.HISTORICAL_DATA_AGE) {
+    if (
+      opts.start &&
+      opts.start < new Date().getTime() - this.HISTORICAL_DATA_AGE
+    ) {
       throw new Error('Start date should be within last 365 days')
     }
 
@@ -60,7 +63,7 @@ export class BitfinexPricingClient extends PricingClient {
       }
 
       results.push(
-        ...response.data.map((item) => ({
+        ...response.data.map(item => ({
           price: item[3],
           ts: item[12]
         }))
@@ -84,6 +87,8 @@ export class BitfinexPricingClient extends PricingClient {
       return results
     }
 
-    return this._cappedToMaxResults(results.filter((_, index) => index % 2 === 0))
+    return this._cappedToMaxResults(
+      results.filter((_, index) => index % 2 === 0)
+    )
   }
 }
