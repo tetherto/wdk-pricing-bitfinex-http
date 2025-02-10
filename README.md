@@ -1,18 +1,36 @@
-# Lib Wallet Pricing - Bitfinex HTTP
+<p align="center" width="100">
+<a href="https://github.com/tetherto/lib-wallet">
+<img src="https://github.com/tetherto/lib-wallet/blob/main/docs/logo.svg" width="200"/>
+</a>
+</p>
 
-This library is an implementation of [lib-wallet-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-bitfinex-http) `PricingClient`. It exposes methods to obtain the current price & historical data for given ticker.
+# ⚛️ lib-wallet-pricing-bitfinex-http
 
-## Installation
+This library is an implementation of [lib-wallet-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-bitfinex-http) `PricingClient`. It uses Bitfinex [Public HTTP API](https://docs.bitfinex.com/docs/rest-public) to obtain the current price & historical data for given ticker.
 
-1. Install the required dependencies:
+## 📋 Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Usage Examples](#usage-examples)
+- [Related Projects](#related-projects)
+
+## ✨ Features
+
+- Compatible with [lib-wallet-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-provider)
+- Fetch current price for given ticker
+- Fetch historical price for given ticker
+
+## 🚀 Installation
 
 ```bash
 npm install lib-wallet-pricing-bitfinex-http
 ```
 
-## Usage
+## 💡 Quick Start
 
-```js
+```javascript
 // Initialise the client
 const client = new BitfinexPricingClient();
 
@@ -27,3 +45,13 @@ const historicalPrice = await client.getHistoricalPrice({
   end: 1709913600000, // Optional, End date for historical interval
 });
 ```
+
+## 🔍 Usage Examples
+
+For detailed usage examples, please check the included test file `index.test.js` of this repository.
+
+## 🔗 Related Projects
+
+This project is part of the [lib-wallet](https://github.com/tetherto/lib-wallet) ecosystem. See the following projects for more information:
+
+- [Lib Wallet Pricing Provider](https://github.com/tetherto/lib-wallet-pricing-provider)
