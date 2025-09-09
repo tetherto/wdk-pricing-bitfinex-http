@@ -7,7 +7,7 @@ describe('BitfinexPricingClient', () => {
   let mockGet
 
   beforeEach(() => {
-    // Create a mock get function
+    // Create a mock get function for historical data
     mockGet = jest.fn().mockResolvedValue({
       data: [
         'tBTCUSD', // [0] SYMBOL
@@ -23,9 +23,15 @@ describe('BitfinexPricingClient', () => {
       ]
     })
 
-    // Mock axios.create to return an object with our mock get function
+    // Create a mock post function for current price
+    const mockPost = jest.fn().mockResolvedValue({
+      data: [165000.12345]
+    })
+
+    // Mock axios.create to return an object with our mock functions
     axios.create = jest.fn().mockReturnValue({
-      get: mockGet
+      get: mockGet,
+      post: mockPost
     })
 
     client = new BitfinexPricingClient()
@@ -39,7 +45,17 @@ describe('BitfinexPricingClient', () => {
       expect(axios.create).toHaveBeenCalledWith({
         baseURL: 'https://api-pub.bitfinex.com/v2'
       })
-      expect(mockGet).toHaveBeenCalledWith('/ticker/tBTCUSD')
+      // Get the post function from the mocked axios client
+      const mockPost = axios.create().post
+      expect(mockPost).toHaveBeenCalledWith('/calc/fx', {
+        ccy1: 'BTC',
+        ccy2: 'USD'
+      }, {
+        headers: {
+          contentType: 'application/json',
+          accept: 'application/json'
+        }
+      })
     })
   })
 

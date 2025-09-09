@@ -27,7 +27,7 @@ export class BitfinexPricingClient extends PricingClient {
   async getCurrentPrice (from, to) {
     const response = await this.client.post('/calc/fx', {
       ccy1: from.toUpperCase(),
-      ccy2: from.toUpperCase()
+      ccy2: to.toUpperCase()
     }, {
       headers: {
         contentType: 'application/json',
