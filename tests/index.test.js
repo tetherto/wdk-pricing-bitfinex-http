@@ -16,14 +16,14 @@
 
 import { beforeEach, describe, expect, it, jest } from '@jest/globals'
 import axios from 'axios'
-import { BitfinexPricingClient } from './index'
+import { BitfinexPricingClient } from '../index'
 
 describe('BitfinexPricingClient', () => {
   let client
   let mockGet
 
   beforeEach(() => {
-    // Create a mock get function
+    // Create a mock get function for historical data
     mockGet = jest.fn().mockResolvedValue({
       data: [
         'tBTCUSD', // [0] SYMBOL
@@ -38,10 +38,15 @@ describe('BitfinexPricingClient', () => {
         162000.12345 // [9] LOW
       ]
     })
+    // Create a mock post function for current price
+    const mockPost = jest.fn().mockResolvedValue({
+      data: [165000.12345]
+    })
 
-    // Mock axios.create to return an object with our mock get function
+    // Mock axios.create to return an object with our mock get function for historical data
     axios.create = jest.fn().mockReturnValue({
-      get: mockGet
+      get: mockGet,
+      post: mockPost
     })
 
     client = new BitfinexPricingClient()
@@ -55,7 +60,17 @@ describe('BitfinexPricingClient', () => {
       expect(axios.create).toHaveBeenCalledWith({
         baseURL: 'https://api-pub.bitfinex.com/v2'
       })
-      expect(mockGet).toHaveBeenCalledWith('/ticker/tBTCUSD')
+      // Get the post function from the mocked axios client
+      const mockPost = axios.create().post
+      expect(mockPost).toHaveBeenCalledWith('/calc/fx', {
+        ccy1: 'BTC',
+        ccy2: 'USD'
+      }, {
+        headers: {
+          contentType: 'application/json',
+          accept: 'application/json'
+        }
+      })
     })
   })
 
@@ -77,8 +92,19 @@ describe('BitfinexPricingClient', () => {
     })
 
     it('should return historical price data', async () => {
-      const start = 1709906400000 // Friday, March 8, 2024 2:00:00 PM
-      const end = 1709913600000 // Friday, March 8, 2024 4:00:00 PM
+      const now = new Date().getTime()
+      // 3 hours window ending now, aligned to hourly rounding behavior
+      const end = now - (now % 3600000)
+      const start = end - (2 * 3600000)
+
+      // Update mock data timestamps to match start/end above
+      const alignedHistoricalData = [
+        ['tBTCUSD', 163000, 1, 164000, 0, 0, 0, 0, 0, 0, 0, 0, end],
+        ['tBTCUSD', 162000, 1, 163000, 0, 0, 0, 0, 0, 0, 0, 0, end - 3600000],
+        ['tBTCUSD', 161000, 1, 162000, 0, 0, 0, 0, 0, 0, 0, 0, start]
+      ]
+
+      mockGet.mockReset().mockResolvedValueOnce({ data: alignedHistoricalData }).mockResolvedValueOnce({ data: [] })
 
       const result = await client.getHistoricalPrice({
         from: 'BTC',
@@ -88,9 +114,9 @@ describe('BitfinexPricingClient', () => {
       })
 
       expect(result).toEqual([
-        { price: 164000, ts: 1709913600000 },
-        { price: 163000, ts: 1709910000000 },
-        { price: 162000, ts: 1709906400000 }
+        { price: 164000, ts: end },
+        { price: 163000, ts: end - 3600000 },
+        { price: 162000, ts: start }
       ])
 
       expect(mockGet).toHaveBeenCalledWith(
@@ -114,6 +140,8 @@ describe('BitfinexPricingClient', () => {
 
     it('should cap results to MAX_HISTORICAL_ENTRIES', async () => {
       // Create mock data with more than MAX_HISTORICAL_ENTRIES
+      const now = new Date().getTime()
+      const end = now - (now % 3600000)
       const largeDataSet = Array(150).fill(null).map((_, index) => [
         'tBTCUSD',
         160000 + index,
@@ -126,7 +154,7 @@ describe('BitfinexPricingClient', () => {
         1000,
         162000 + index,
         159000 + index,
-        1709913600000 - (index * 3600000)
+        end - (index * 3600000)
       ])
 
       mockGet.mockReset().mockResolvedValueOnce({
@@ -138,8 +166,8 @@ describe('BitfinexPricingClient', () => {
       const result = await client.getHistoricalPrice({
         from: 'BTC',
         to: 'USD',
-        start: 1709913600000 - (150 * 3600000),
-        end: 1709913600000
+        start: end - (150 * 3600000),
+        end
       })
 
       expect(result.length).toBeLessThanOrEqual(client.MAX_HISTORICAL_ENTRIES)
