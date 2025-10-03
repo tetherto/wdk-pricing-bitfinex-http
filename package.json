@@ -68,7 +68,6 @@
   "devDependencies": {
     "cross-env": "^10.1.0",
     "brittle": "^3.0.0",
-    "bare": "^1.22.0",
     "jest": "^30.2.0",
     "standard": "^17.1.2",
     "typescript": "^5.9.3"
