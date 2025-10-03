@@ -1,8 +1,9 @@
 {
-  "name": "wdk-pricing-provider-bitfinex-http",
-  "version": "0.1.0",
-  "description": "Bitfinex HTTP implementation of wdk-pricing-provider",
+  "name": "@tetherto/wdk-pricing-bitfinex-http",
+  "version": "1.0.0-beta.1",
+  "description": "Bitfinex HTTP implementation of @tetherto/wdk-pricing-provider",
   "keywords": [
+    "tetherto",
     "wdk",
     "wallet",
     "bitcoin",
@@ -15,7 +16,7 @@
   "license": "APACHE-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/tetherto/wdk-pricing-provider-bitfinex-http.git"
+    "url": "git://github.com/tetherto/lib-wallet-pricing-bitfinex-http.git"
   },
   "main": "index.js",
   "scripts": {
