@@ -1,7 +1,7 @@
 {
   "name": "@tetherto/wdk-pricing-bitfinex-http",
   "version": "1.0.0-beta.1",
-  "description": "Bitfinex HTTP implementation of @tetherto/wdk-pricing-provider",
+  "description": "Bitfinex HTTP client for @tetherto/wdk-pricing-provider",
   "keywords": [
     "tetherto",
     "wdk",
@@ -63,17 +63,20 @@
     ]
   },
   "dependencies": {
-    "bare-wdk-runtime": "^2.0.1"
+    "@tetherto/wdk-pricing-provider": "^1.0.0-beta.1",
+    "bare-node-util": "^1.0.0",
+    "util": "npm:bare-node-util",
+    "bare-wdk-runtime": "2.0.1"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0",
-    "brittle": "^3.0.0",
-    "jest": "^30.2.0",
-    "standard": "^17.1.2",
-    "typescript": "^5.9.3"
+    "brittle": "3.0.0",
+    "cross-env": "10.1.0",
+    "jest": "30.2.0",
+    "standard": "17.1.2",
+    "typescript": "5.9.3"
   },
   "peerDependencies": {
-    "axios": "^1.12.2",
-    "wdk-pricing-provider": "github:tetherto/lib-wallet-pricing-provider"
+    "@tetherto/wdk-pricing-provider": "^1.0.0-beta.1",
+    "axios": "1.12.2"
   }
 }

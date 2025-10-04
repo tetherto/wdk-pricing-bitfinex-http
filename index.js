@@ -15,7 +15,7 @@
 //
 
 import axios from 'axios'
-import { PricingClient } from 'wdk-pricing-provider'
+import { PricingClient } from '@tetherto/wdk-pricing-provider'
 
 export class BitfinexPricingClient extends PricingClient {
   HISTORICAL_DATA_AGE = 365 * 24 * 60 * 60000
