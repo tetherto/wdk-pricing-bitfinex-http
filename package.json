@@ -63,20 +63,15 @@
     ]
   },
   "dependencies": {
-    "@tetherto/wdk-pricing-provider": "^1.0.0-beta.1",
-    "bare-node-util": "^1.0.0",
-    "util": "npm:bare-node-util",
-    "bare-wdk-runtime": "2.0.1"
+    "@tetherto/wdk-pricing-provider": "github:tetherto/lib-wallet-pricing-provider",
+    "bare-wdk-runtime": "2.0.1",
+    "axios": "1.12.2"
   },
   "devDependencies": {
-    "brittle": "3.0.0",
+    "brittle": "3.19.0",
     "cross-env": "10.1.0",
     "jest": "30.2.0",
     "standard": "17.1.2",
     "typescript": "5.9.3"
-  },
-  "peerDependencies": {
-    "@tetherto/wdk-pricing-provider": "^1.0.0-beta.1",
-    "axios": "1.12.2"
   }
 }
