@@ -15,7 +15,7 @@
 //
 
 import axios from 'axios'
-import { PricingClient } from 'lib-wallet-pricing-provider'
+import { PricingClient } from '@tetherto/wdk-pricing-provider'
 
 export class BitfinexPricingClient extends PricingClient {
   HISTORICAL_DATA_AGE = 365 * 24 * 60 * 60000
@@ -39,9 +39,16 @@ export class BitfinexPricingClient extends PricingClient {
    * @returns {Promise<number>}
    */
   async getCurrentPrice (from, to) {
-    const response = await this.client.get(`/ticker/t${from}${to}`)
-
-    return response.data[6]
+    const response = await this.client.post('/calc/fx', {
+      ccy1: from.toUpperCase(),
+      ccy2: to.toUpperCase()
+    }, {
+      headers: {
+        contentType: 'application/json',
+        accept: 'application/json'
+      }
+    })
+    return response.data[0]
   }
 
   /**

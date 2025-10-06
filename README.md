@@ -1,57 +1,101 @@
-<p align="center" width="100">
-<a href="https://github.com/tetherto/lib-wallet">
-<img src="https://github.com/tetherto/lib-wallet/blob/main/docs/logo.svg" width="200"/>
-</a>
-</p>
+# @tetherto/wdk-pricing-bitfinex-http
 
-# ⚛️ lib-wallet-pricing-bitfinex-http
+Note: This package is in beta. Please test in a dev setup first.
 
-This library is an implementation of [lib-wallet-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-bitfinex-http) `PricingClient`. It uses Bitfinex [Public HTTP API](https://docs.bitfinex.com/docs/rest-public) to obtain the current price & historical data for given ticker.
+HTTP client for prices from Bitfinex, it uses [Bitfinex Public HTTP API](https://docs.bitfinex.com/docs/rest-public) to obtain the current price & historical data for given ticker.
 
-## 📋 Table of Contents
+It works as a `PricingClient` for [`@tetherto/wdk-pricing-provider`](https://github.com/tetherto/lib-wallet-pricing-bitfinex-http).
 
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage Examples](#usage-examples)
-- [Related Projects](#related-projects)
+## 🔍 About WDK
+
+This module is part of the WDK (Wallet Development Kit) project. Learn more at https://docs.wallet.tether.io.
 
 ## ✨ Features
 
-- Compatible with [lib-wallet-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-provider)
+- Compatible with [@tetherto/wdk-pricing-provider](https://github.com/tetherto/lib-wallet-pricing-provider)
 - Fetch current price for given ticker
-- Fetch historical price for given ticker
+- Fetch historical prices given ticker
+- Downscales long history to max 100 points
 
-## 🚀 Installation
+## ⬇️ Installation
 
 ```bash
-npm install lib-wallet-pricing-bitfinex-http
+npm install @tetherto/wdk-pricing-bitfinex-http
 ```
 
-## 💡 Quick Start
+## 🚀 Quick Start
 
 ```javascript
-// Initialise the client
+import { BitfinexPricingClient } from "@tetherto/wdk-pricing-bitfinex-http";
+
+// Create the client
 const client = new BitfinexPricingClient();
 
-// Get latest price for BTCUSD/
-const currentPrice = await client.getCurrentPrice('BTC', 'USD');
+// Get latest price
+const current = await client.getCurrentPrice("BTC", "USD");
 
-// Get Hitorical price. If results are higher than MAX_HISTORICAL_ENTRIES (100), the response will be downscaled by x2
-const historicalPrice = await client.getHistoricalPrice({
-  from: 'BTC',
-  to: 'USD',
-  start: 1709906400000, // Optional, Start date for historical interval
-  end: 1709913600000, // Optional, End date for historical interval
+// Get historical prices
+const history = await client.getHistoricalPrice({
+  from: "BTC",
+  to: "USD",
+  start: 1709906400000, // optional
+  end: 1709913600000, // optional
 });
 ```
 
-## 🔍 Usage Examples
+## 📚 API Reference
 
-For detailed usage examples, please check the included test file `index.test.js` of this repository.
+### BitfinexPricingClient
 
-## 🔗 Related Projects
+Simple HTTP pricing client for Bitfinex.
 
-This project is part of the [lib-wallet](https://github.com/tetherto/lib-wallet) ecosystem. See the following projects for more information:
+#### Constructor
 
-- [Lib Wallet Pricing Provider](https://github.com/tetherto/lib-wallet-pricing-provider)
+```javascript
+new BitfinexPricingClient(options?)
+```
+
+Parameters:
+
+- `options` (optional): future use
+
+### Methods
+
+| Method                                           | Description       | Returns               |
+| ------------------------------------------------ | ----------------- | --------------------- |
+| `getCurrentPrice(base, quote)`                   | Get latest price  | `Promise<number>`     |
+| `getHistoricalPrice({ from, to, start?, end? })` | Get price history | `Promise<Array<any>>` |
+
+#### `getCurrentPrice(base, quote)`
+
+```javascript
+const price = await client.getCurrentPrice("BTC", "USD");
+```
+
+#### `getHistoricalPrice({ from, to, start?, end? })`
+
+If the list is longer than 100 points, it is downscaled by 2x steps until <= 100.
+
+```javascript
+const series = await client.getHistoricalPrice({ from: "BTC", to: "USD" });
+```
+
+## 🛠️ Development
+
+```bash
+npm install
+npm run lint
+npm test
+```
+
+## 📜 License
+
+This project is licensed under the Apache License 2.0 - see the LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 🆘 Support
+
+For support, please open an issue on the GitHub repository.
