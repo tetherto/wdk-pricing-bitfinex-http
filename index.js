@@ -34,7 +34,7 @@ import axios from 'axios'
 /**
  * @typedef {Object} HistoricalPriceResult
  * @property {number} price Asset price at the given timestamp
- * @property {number} ts Unix timestamp in milliseconds
+ * @property {number} date Unix timestamp in milliseconds
  */
 
 export class BitfinexPricingClient extends PricingClient {
