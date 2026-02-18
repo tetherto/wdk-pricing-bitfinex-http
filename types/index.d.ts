@@ -1,4 +1,4 @@
-import { PricingClient } from "@tetherto/wdk-pricing-provider";
+import { PricingClient, PriceData } from "@tetherto/wdk-pricing-provider";
 
 /** A currency pair used to identify a trading market. */
 export type CurrencyPair = {
@@ -41,6 +41,13 @@ export class BitfinexPricingClient extends PricingClient {
    * Returns prices in the same order as the input pairs.
    */
   getMultiCurrentPrice(pairs: CurrencyPair[]): Promise<number[]>;
+
+  /**
+   * Fetches full price data (last price, daily change, relative daily change)
+   * for multiple currency pairs in a single batch request.
+   * Returns price data in the same order as the input pairs.
+   */
+  getMultiPriceData(pairs: CurrencyPair[]): Promise<PriceData[]>;
 
   /**
    * Fetches historical prices for a currency pair.

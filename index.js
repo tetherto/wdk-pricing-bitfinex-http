@@ -100,6 +100,39 @@ export class BitfinexPricingClient extends PricingClient {
   }
 
   /**
+   * Fetches full price data (last price, daily change, relative daily change)
+   * for multiple currency pairs in a single batch request.
+   * @param {CurrencyPair[]} pairs - Array of currency pairs
+   * @returns {Promise<import('@tetherto/wdk-pricing-provider').PriceData[]>} Price data in the same order as input pairs
+   */
+  async getMultiPriceData (pairs) {
+    const symbols = pairs
+      .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
+      .join(',')
+
+    const response = await this.client.get(`/tickers?symbols=${symbols}`)
+
+    const SYMBOL_INDEX = 0
+    const DAILY_CHANGE_INDEX = 5
+    const DAILY_CHANGE_RELATIVE_INDEX = 6
+    const LAST_PRICE_INDEX = 7
+
+    const priceDataBySymbol = new Map()
+    for (const ticker of response.data) {
+      priceDataBySymbol.set(ticker[SYMBOL_INDEX], {
+        lastPrice: ticker[LAST_PRICE_INDEX],
+        dailyChange: ticker[DAILY_CHANGE_INDEX],
+        dailyChangeRelative: ticker[DAILY_CHANGE_RELATIVE_INDEX]
+      })
+    }
+
+    return pairs.map((p) => {
+      const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
+      return priceDataBySymbol.get(symbol)
+    })
+  }
+
+  /**
    * @param {HistoricalPriceOptions} opts
    * @returns {Promise<HistoricalPriceResult[]>}
    */
