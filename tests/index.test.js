@@ -74,6 +74,66 @@ describe('BitfinexPricingClient', () => {
     })
   })
 
+  describe('getMultiCurrentPrice', () => {
+    it('should return prices for multiple pairs from Bitfinex tickers API', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000.12345, 14480, 166000, 162000],
+          ['tETHUSD', 3000, 200, 3010, 200, 50, 0.02, 3005.6789, 50000, 3100, 2900]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrice([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([165000.12345, 3005.6789])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD,tETHUSD')
+    })
+
+    it('should handle single pair', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrice([{ from: 'BTC', to: 'USD' }])
+
+      expect(prices).toEqual([165000])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+
+    it('should preserve input order when API returns different order', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tETHUSD', 3000, 200, 3010, 200, 50, 0.02, 3005, 50000, 3100, 2900],
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrice([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([165000, 3005])
+    })
+
+    it('should convert currency codes to uppercase', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      await client.getMultiCurrentPrice([{ from: 'btc', to: 'usd' }])
+
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+  })
+
   describe('getHistoricalPrice', () => {
     const mockHistoricalData = [
       // Format: [SYMBOL, BID, BIDSIZE, ASK, ASKSIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE, VOLUME, HIGH, LOW, MTS]

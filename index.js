@@ -14,47 +14,92 @@
 // limitations under the License.
 //
 
-import axios from 'axios'
 import { PricingClient } from '@tetherto/wdk-pricing-provider'
+import axios from 'axios'
+
+/**
+ * @typedef {Object} CurrencyPair
+ * @property {string} from Base currency (e.g. 'BTC')
+ * @property {string} to Quote currency (e.g. 'USD')
+ */
+
+/**
+ * @typedef {Object} HistoricalPriceOptions
+ * @property {string} from Base currency (e.g. 'BTC')
+ * @property {string} to Quote currency (e.g. 'USD')
+ * @property {number} start Start of the time range as a Unix timestamp in milliseconds
+ * @property {number} end End of the time range as a Unix timestamp in milliseconds
+ */
+
+/**
+ * @typedef {Object} HistoricalPriceResult
+ * @property {number} price Asset price at the given timestamp
+ * @property {number} ts Unix timestamp in milliseconds
+ */
 
 export class BitfinexPricingClient extends PricingClient {
+  /** @internal */
   HISTORICAL_DATA_AGE = 365 * 24 * 60 * 60000
+
+  /** @internal */
   MAX_HISTORICAL_ENTRIES = 100
 
-  /**
-   * Creates a new BitfinexPricingClient instance.
-   */
   constructor () {
     super()
+    /** @internal */
     this.client = axios.create({
       baseURL: 'https://api-pub.bitfinex.com/v2'
     })
   }
 
   /**
-   * Returns the current price of the asset pair
-   * @async
-   * @param {string} from
-   * @param {string} to
+   * @param {string} from - Base currency (e.g. 'BTC')
+   * @param {string} to - Quote currency (e.g. 'USD')
    * @returns {Promise<number>}
    */
   async getCurrentPrice (from, to) {
-    const response = await this.client.post('/calc/fx', {
-      ccy1: from.toUpperCase(),
-      ccy2: to.toUpperCase()
-    }, {
-      headers: {
-        contentType: 'application/json',
-        accept: 'application/json'
+    const response = await this.client.post(
+      '/calc/fx',
+      {
+        ccy1: from.toUpperCase(),
+        ccy2: to.toUpperCase()
+      },
+      {
+        headers: {
+          contentType: 'application/json',
+          accept: 'application/json'
+        }
       }
-    })
+    )
     return response.data[0]
   }
 
   /**
-   * Returns the recorded lowest ask (not trade) of the asset pair.
-   * Bitfinex only supports max 250 records per request.
-   * @async
+   * @param {CurrencyPair[]} pairs - Array of currency pairs
+   * @returns {Promise<number[]>} Array of prices in the same order as input pairs
+   */
+  async getMultiCurrentPrice (pairs) {
+    const symbols = pairs
+      .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
+      .join(',')
+
+    const response = await this.client.get(`/tickers?symbols=${symbols}`)
+
+    const SYMBOL_INDEX = 0
+    const LAST_PRICE_INDEX = 7
+    const priceBySymbol = new Map()
+
+    for (const ticker of response.data) {
+      priceBySymbol.set(ticker[SYMBOL_INDEX], ticker[LAST_PRICE_INDEX])
+    }
+
+    return pairs.map((p) => {
+      const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
+      return priceBySymbol.get(symbol)
+    })
+  }
+
+  /**
    * @param {HistoricalPriceOptions} opts
    * @returns {Promise<HistoricalPriceResult[]>}
    */
@@ -73,7 +118,7 @@ export class BitfinexPricingClient extends PricingClient {
 
     let cursor = end
 
-    // Bitfixes returns data rounded to 1 hour && results are always in descending order
+    // Bitfinex returns data rounded to 1 hour, results are always in descending order
     while (Math.abs(cursor - start) > 3600000) {
       const response = await this.client.get(
         `/tickers/hist?symbols=t${opts.from}${opts.to}&limit=100&start=${start}&end=${cursor}`
@@ -84,7 +129,7 @@ export class BitfinexPricingClient extends PricingClient {
       }
 
       results.push(
-        ...response.data.map(item => ({
+        ...response.data.map((item) => ({
           price: item[3],
           ts: item[12]
         }))
@@ -99,7 +144,7 @@ export class BitfinexPricingClient extends PricingClient {
   }
 
   /**
-   * Cuts the results to the maximum number of entries.
+   * @internal
    * @param {HistoricalPriceResult[]} results
    * @returns {HistoricalPriceResult[]}
    */
