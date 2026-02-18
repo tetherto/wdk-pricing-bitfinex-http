@@ -1,11 +1,50 @@
-export class BitfinexPricingClient extends PricingClient {
-    HISTORICAL_DATA_AGE: number;
-    MAX_HISTORICAL_ENTRIES: number;
-    client: import("axios").AxiosInstance;
+import { PricingClient } from "@tetherto/wdk-pricing-provider";
 
-    getCurrentPrice(from: string, to: string): Promise<number>;
-    getMultiCurrentPrice(pairs: { from: string, to: string }[]): Promise<number[]>;
-    getHistoricalPrice(opts: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
-    _cappedToMaxResults(results: HistoricalPriceResult[]): HistoricalPriceResult[];
+/** A currency pair used to identify a trading market. */
+export type CurrencyPair = {
+  /** Base currency (e.g. 'BTC') */
+  from: string;
+  /** Quote currency (e.g. 'USD') */
+  to: string;
+};
+
+/** Options for fetching historical price data. */
+export type HistoricalPriceOptions = {
+  /** Base currency (e.g. 'BTC') */
+  from: string;
+  /** Quote currency (e.g. 'USD') */
+  to: string;
+  /** Start of the time range as a Unix timestamp in milliseconds */
+  start: number;
+  /** End of the time range as a Unix timestamp in milliseconds */
+  end: number;
+};
+
+/** A single historical price entry. */
+export type HistoricalPriceResult = {
+  /** Asset price at the given timestamp */
+  price: number;
+  /** Unix timestamp in milliseconds */
+  ts: number;
+};
+
+export class BitfinexPricingClient extends PricingClient {
+  /**
+   * Fetches the current price for a single currency pair.
+   * @param from Base currency (e.g. 'BTC')
+   * @param to Quote currency (e.g. 'USD')
+   */
+  getCurrentPrice(from: string, to: string): Promise<number>;
+
+  /**
+   * Fetches current prices for multiple currency pairs in a single request.
+   * Returns prices in the same order as the input pairs.
+   */
+  getMultiCurrentPrice(pairs: CurrencyPair[]): Promise<number[]>;
+
+  /**
+   * Fetches historical prices for a currency pair.
+   * Maximum look-back window is 365 days. Results are capped at 100 entries.
+   */
+  getHistoricalPrice(opts: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
 }
-import { PricingClient } from 'wdk-pricing-provider';
