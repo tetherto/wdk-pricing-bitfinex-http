@@ -1,56 +1,82 @@
-import { PricingClient, PriceData } from "@tetherto/wdk-pricing-provider";
-
-/** A currency pair used to identify a trading market. */
-export type CurrencyPair = {
-  /** Base currency (e.g. 'BTC') */
-  from: string;
-  /** Quote currency (e.g. 'USD') */
-  to: string;
-};
-
-/** Optional time range for fetching historical price data. */
-export type HistoricalPriceOptions = {
-  /** Start of the time range as a Unix timestamp in milliseconds */
-  start?: number;
-  /** End of the time range as a Unix timestamp in milliseconds */
-  end?: number;
-};
-
-/** A single historical price entry. */
-export type HistoricalPriceResult = {
-  /** Asset price at the given timestamp */
-  price: number;
-  /** Unix timestamp in milliseconds */
-  ts: number;
-};
-
+/**
+ * @typedef {Object} CurrencyPair
+ * @property {string} from Base currency (e.g. 'BTC')
+ * @property {string} to Quote currency (e.g. 'USD')
+ */
+/**
+ * @typedef {Object} HistoricalPriceOptions
+ * @property {string} from Base currency (e.g. 'BTC')
+ * @property {string} to Quote currency (e.g. 'USD')
+ * @property {number} start Start of the time range as a Unix timestamp in milliseconds
+ * @property {number} end End of the time range as a Unix timestamp in milliseconds
+ */
+/**
+ * @typedef {Object} HistoricalPriceResult
+ * @property {number} price Asset price at the given timestamp
+ * @property {number} date Unix timestamp in milliseconds
+ */
 export class BitfinexPricingClient extends PricingClient {
-  /**
-   * Fetches the current price for a single currency pair.
-   * @param from Base currency (e.g. 'BTC')
-   * @param to Quote currency (e.g. 'USD')
-   */
-  getCurrentPrice(from: string, to: string): Promise<number>;
-
-  /**
-   * Fetches current prices for multiple currency pairs in a single request.
-   * Returns prices in the same order as the input pairs.
-   */
-  getMultiCurrentPrice(pairs: CurrencyPair[]): Promise<number[]>;
-
-  /**
-   * Fetches full price data (last price, daily change, relative daily change)
-   * for multiple currency pairs in a single batch request.
-   * Returns price data in the same order as the input pairs.
-   */
-  getMultiPriceData(pairs: CurrencyPair[]): Promise<PriceData[]>;
-
-  /**
-   * Fetches historical prices for a currency pair.
-   * Maximum look-back window is 365 days. Results are capped at 100 entries.
-   * @param from Base currency (e.g. 'BTC')
-   * @param to Quote currency (e.g. 'USD')
-   * @param opts Optional time range (start/end as Unix timestamps in milliseconds)
-   */
-  getHistoricalPrice(from: string, to: string, opts?: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
+    /** @internal */
+    HISTORICAL_DATA_AGE: number;
+    /** @internal */
+    MAX_HISTORICAL_ENTRIES: number;
+    /** @internal */
+    client: import("axios").AxiosInstance;
+    /**
+     * @param {CurrencyPair[]} pairs - Array of currency pairs
+     * @returns {Promise<number[]>} Array of prices in the same order as input pairs
+     */
+    getMultiCurrentPrice(pairs: CurrencyPair[]): Promise<number[]>;
+    /**
+     * @param {string} from - Base currency (e.g. 'BTC')
+     * @param {string} to - Quote currency (e.g. 'USD')
+     * @param {HistoricalPriceOptions} [opts={}] - Optional time range
+     * @returns {Promise<HistoricalPriceResult[]>}
+     */
+    getHistoricalPrice(from: string, to: string, opts?: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
+    /**
+     * @internal
+     * @param {HistoricalPriceResult[]} results
+     * @returns {HistoricalPriceResult[]}
+     */
+    _cappedToMaxResults(results: HistoricalPriceResult[]): HistoricalPriceResult[];
 }
+export type CurrencyPair = {
+    /**
+     * Base currency (e.g. 'BTC')
+     */
+    from: string;
+    /**
+     * Quote currency (e.g. 'USD')
+     */
+    to: string;
+};
+export type HistoricalPriceOptions = {
+    /**
+     * Base currency (e.g. 'BTC')
+     */
+    from: string;
+    /**
+     * Quote currency (e.g. 'USD')
+     */
+    to: string;
+    /**
+     * Start of the time range as a Unix timestamp in milliseconds
+     */
+    start: number;
+    /**
+     * End of the time range as a Unix timestamp in milliseconds
+     */
+    end: number;
+};
+export type HistoricalPriceResult = {
+    /**
+     * Asset price at the given timestamp
+     */
+    price: number;
+    /**
+     * Unix timestamp in milliseconds
+     */
+    date: number;
+};
+import { PricingClient } from '@tetherto/wdk-pricing-provider';
