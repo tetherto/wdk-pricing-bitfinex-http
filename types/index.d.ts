@@ -8,16 +8,12 @@ export type CurrencyPair = {
   to: string;
 };
 
-/** Options for fetching historical price data. */
+/** Optional time range for fetching historical price data. */
 export type HistoricalPriceOptions = {
-  /** Base currency (e.g. 'BTC') */
-  from: string;
-  /** Quote currency (e.g. 'USD') */
-  to: string;
   /** Start of the time range as a Unix timestamp in milliseconds */
-  start: number;
+  start?: number;
   /** End of the time range as a Unix timestamp in milliseconds */
-  end: number;
+  end?: number;
 };
 
 /** A single historical price entry. */
@@ -52,6 +48,9 @@ export class BitfinexPricingClient extends PricingClient {
   /**
    * Fetches historical prices for a currency pair.
    * Maximum look-back window is 365 days. Results are capped at 100 entries.
+   * @param from Base currency (e.g. 'BTC')
+   * @param to Quote currency (e.g. 'USD')
+   * @param opts Optional time range (start/end as Unix timestamps in milliseconds)
    */
-  getHistoricalPrice(opts: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
+  getHistoricalPrice(from: string, to: string, opts?: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
 }

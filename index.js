@@ -133,10 +133,12 @@ export class BitfinexPricingClient extends PricingClient {
   }
 
   /**
-   * @param {HistoricalPriceOptions} opts
+   * @param {string} from - Base currency (e.g. 'BTC')
+   * @param {string} to - Quote currency (e.g. 'USD')
+   * @param {HistoricalPriceOptions} [opts={}] - Optional time range
    * @returns {Promise<HistoricalPriceResult[]>}
    */
-  async getHistoricalPrice (opts) {
+  async getHistoricalPrice (from, to, opts = {}) {
     if (
       opts.start &&
       opts.start < new Date().getTime() - this.HISTORICAL_DATA_AGE
@@ -144,8 +146,8 @@ export class BitfinexPricingClient extends PricingClient {
       throw new Error('Start date should be within last 365 days')
     }
 
-    const start = opts?.start
-    const end = opts?.end
+    const start = opts.start
+    const end = opts.end
 
     const results = []
 
@@ -154,7 +156,7 @@ export class BitfinexPricingClient extends PricingClient {
     // Bitfinex returns data rounded to 1 hour, results are always in descending order
     while (Math.abs(cursor - start) > 3600000) {
       const response = await this.client.get(
-        `/tickers/hist?symbols=t${opts.from}${opts.to}&limit=100&start=${start}&end=${cursor}`
+        `/tickers/hist?symbols=t${from}${to}&limit=100&start=${start}&end=${cursor}`
       )
 
       if (!response.data.length) {

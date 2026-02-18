@@ -166,12 +166,7 @@ describe('BitfinexPricingClient', () => {
 
       mockGet.mockReset().mockResolvedValueOnce({ data: alignedHistoricalData }).mockResolvedValueOnce({ data: [] })
 
-      const result = await client.getHistoricalPrice({
-        from: 'BTC',
-        to: 'USD',
-        start,
-        end
-      })
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start, end })
 
       expect(result).toEqual([
         { price: 164000, ts: end },
@@ -189,12 +184,7 @@ describe('BitfinexPricingClient', () => {
       const tooOld = now - (366 * 24 * 60 * 60000)
 
       await expect(
-        client.getHistoricalPrice({
-          from: 'BTC',
-          to: 'USD',
-          start: tooOld,
-          end: now
-        })
+        client.getHistoricalPrice('BTC', 'USD', { start: tooOld, end: now })
       ).rejects.toThrow('Start date should be within last 365 days')
     })
 
@@ -223,12 +213,7 @@ describe('BitfinexPricingClient', () => {
         data: []
       })
 
-      const result = await client.getHistoricalPrice({
-        from: 'BTC',
-        to: 'USD',
-        start: end - (150 * 3600000),
-        end
-      })
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start: end - (150 * 3600000), end })
 
       expect(result.length).toBeLessThanOrEqual(client.MAX_HISTORICAL_ENTRIES)
       expect(result.length).toBe(75) // After one round of filtering (every other entry)
