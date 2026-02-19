@@ -13,7 +13,7 @@
 /**
  * @typedef {Object} HistoricalPriceResult
  * @property {number} price Asset price at the given timestamp
- * @property {number} date Unix timestamp in milliseconds
+ * @property {number} timestamp Unix timestamp in milliseconds
  */
 export class BitfinexPricingClient extends PricingClient {
     /** @internal */
@@ -77,6 +77,6 @@ export type HistoricalPriceResult = {
     /**
      * Unix timestamp in milliseconds
      */
-    date: number;
+    timestamp: number;
 };
-import { PricingClient } from '@tetherto/wdk-pricing-provider';
+import { PricingClient } from "@tetherto/wdk-pricing-provider";
