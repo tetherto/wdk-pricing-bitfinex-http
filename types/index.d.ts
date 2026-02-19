@@ -5,8 +5,6 @@
  */
 /**
  * @typedef {Object} HistoricalPriceOptions
- * @property {string} from Base currency (e.g. 'BTC')
- * @property {string} to Quote currency (e.g. 'USD')
  * @property {number} start Start of the time range as a Unix timestamp in milliseconds
  * @property {number} end End of the time range as a Unix timestamp in milliseconds
  */
@@ -28,13 +26,6 @@ export class BitfinexPricingClient extends PricingClient {
      */
     getMultiCurrentPrice(pairs: CurrencyPair[]): Promise<number[]>;
     /**
-     * @param {string} from - Base currency (e.g. 'BTC')
-     * @param {string} to - Quote currency (e.g. 'USD')
-     * @param {HistoricalPriceOptions} [opts={}] - Optional time range
-     * @returns {Promise<HistoricalPriceResult[]>}
-     */
-    getHistoricalPrice(from: string, to: string, opts?: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
-    /**
      * @internal
      * @param {HistoricalPriceResult[]} results
      * @returns {HistoricalPriceResult[]}
@@ -52,14 +43,6 @@ export type CurrencyPair = {
     to: string;
 };
 export type HistoricalPriceOptions = {
-    /**
-     * Base currency (e.g. 'BTC')
-     */
-    from: string;
-    /**
-     * Quote currency (e.g. 'USD')
-     */
-    to: string;
     /**
      * Start of the time range as a Unix timestamp in milliseconds
      */
