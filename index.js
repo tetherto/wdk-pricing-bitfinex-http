@@ -18,21 +18,10 @@ import { PricingClient } from '@tetherto/wdk-pricing-provider'
 import axios from 'axios'
 
 /**
- * @typedef {Object} CurrencyPair
- * @property {string} from Base currency (e.g. 'BTC')
- * @property {string} to Quote currency (e.g. 'USD')
- */
-
-/**
- * @typedef {Object} HistoricalPriceOptions
- * @property {number} start Start of the time range as a Unix timestamp in milliseconds
- * @property {number} end End of the time range as a Unix timestamp in milliseconds
- */
-
-/**
- * @typedef {Object} HistoricalPriceResult
- * @property {number} price Asset price at the given timestamp
- * @property {number} timestamp Unix timestamp in milliseconds
+ * @typedef {import('@tetherto/wdk-pricing-provider').PricePair} PricePair
+ * @typedef {import('@tetherto/wdk-pricing-provider').HistoricalPriceOptions} HistoricalPriceOptions
+ * @typedef {import('@tetherto/wdk-pricing-provider').HistoricalPriceResult} HistoricalPriceResult
+ * @typedef {import('@tetherto/wdk-pricing-provider').PriceData} PriceData
  */
 
 export class BitfinexPricingClient extends PricingClient {
@@ -73,11 +62,11 @@ export class BitfinexPricingClient extends PricingClient {
   }
 
   /**
-   * @param {CurrencyPair[]} pairs - Array of currency pairs
+   * @param {PricePair[]} list - Array of currency pairs
    * @returns {Promise<number[]>} Array of prices in the same order as input pairs
    */
-  async getMultiCurrentPrice (pairs) {
-    const symbols = pairs
+  async getMultiCurrentPrices (list) {
+    const symbols = list
       .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
       .join(',')
 
@@ -91,7 +80,7 @@ export class BitfinexPricingClient extends PricingClient {
       priceBySymbol.set(ticker[SYMBOL_INDEX], ticker[LAST_PRICE_INDEX])
     }
 
-    return pairs.map((p) => {
+    return list.map((p) => {
       const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
       return priceBySymbol.get(symbol)
     })
@@ -100,11 +89,11 @@ export class BitfinexPricingClient extends PricingClient {
   /**
    * Fetches full price data (last price, daily change, relative daily change)
    * for multiple currency pairs in a single batch request.
-   * @param {CurrencyPair[]} pairs - Array of currency pairs
-   * @returns {Promise<import('@tetherto/wdk-pricing-provider').PriceData[]>} Price data in the same order as input pairs
+   * @param {PricePair[]} list - Array of currency pairs
+   * @returns {Promise<PriceData[]>} Price data in the same order as input pairs
    */
-  async getMultiPriceData (pairs) {
-    const symbols = pairs
+  async getMultiPriceData (list) {
+    const symbols = list
       .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
       .join(',')
 
@@ -124,7 +113,7 @@ export class BitfinexPricingClient extends PricingClient {
       })
     }
 
-    return pairs.map((p) => {
+    return list.map((p) => {
       const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
       return priceDataBySymbol.get(symbol)
     })
@@ -133,7 +122,7 @@ export class BitfinexPricingClient extends PricingClient {
   /**
    * @param {string} from - Base currency (e.g. 'BTC')
    * @param {string} to - Quote currency (e.g. 'USD')
-   * @param {HistoricalPriceOptions} [opts={}] - Optional time range
+   * @param {HistoricalPriceOptions} [opts={}]
    * @returns {Promise<HistoricalPriceResult[]>}
    */
   async getHistoricalPrice (from, to, opts = {}) {

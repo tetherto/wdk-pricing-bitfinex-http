@@ -20,7 +20,7 @@ describe('Integration: BitfinexPricingClient (real API)', () => {
   it('fetches multiple prices from Bitfinex API without mocks', async () => {
     const client = new BitfinexPricingClient()
 
-    const prices = await client.getMultiCurrentPrice([
+    const prices = await client.getMultiCurrentPrices([
       { from: 'BTC', to: 'USD' },
       { from: 'ETH', to: 'USD' }
     ])

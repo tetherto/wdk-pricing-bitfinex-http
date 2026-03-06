@@ -63,9 +63,9 @@
     ]
   },
   "dependencies": {
-    "@tetherto/wdk-pricing-provider": "git+https://github.com/dmytro-herko116/wdk-pricing-provider.git#feat/price-data-support",
-    "bare-wdk-runtime": "2.0.1",
-    "axios": "1.12.2"
+    "@tetherto/wdk-pricing-provider": "github:dmytro-herko116/wdk-pricing-provider#feat/pricing-improvements",
+    "axios": "1.12.2",
+    "bare-wdk-runtime": "2.0.1"
   },
   "devDependencies": {
     "brittle": "3.19.0",

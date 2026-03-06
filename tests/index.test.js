@@ -74,7 +74,7 @@ describe('BitfinexPricingClient', () => {
     })
   })
 
-  describe('getMultiCurrentPrice', () => {
+  describe('getMultiCurrentPrices', () => {
     it('should return prices for multiple pairs from Bitfinex tickers API', async () => {
       mockGet.mockReset().mockResolvedValue({
         data: [
@@ -83,7 +83,7 @@ describe('BitfinexPricingClient', () => {
         ]
       })
 
-      const prices = await client.getMultiCurrentPrice([
+      const prices = await client.getMultiCurrentPrices([
         { from: 'BTC', to: 'USD' },
         { from: 'ETH', to: 'USD' }
       ])
@@ -99,7 +99,7 @@ describe('BitfinexPricingClient', () => {
         ]
       })
 
-      const prices = await client.getMultiCurrentPrice([{ from: 'BTC', to: 'USD' }])
+      const prices = await client.getMultiCurrentPrices([{ from: 'BTC', to: 'USD' }])
 
       expect(prices).toEqual([165000])
       expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
@@ -113,7 +113,7 @@ describe('BitfinexPricingClient', () => {
         ]
       })
 
-      const prices = await client.getMultiCurrentPrice([
+      const prices = await client.getMultiCurrentPrices([
         { from: 'BTC', to: 'USD' },
         { from: 'ETH', to: 'USD' }
       ])
@@ -128,7 +128,7 @@ describe('BitfinexPricingClient', () => {
         ]
       })
 
-      await client.getMultiCurrentPrice([{ from: 'btc', to: 'usd' }])
+      await client.getMultiCurrentPrices([{ from: 'btc', to: 'usd' }])
 
       expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
     })
