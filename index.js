@@ -62,13 +62,28 @@ export class BitfinexPricingClient extends PricingClient {
   }
 
   /**
+   * Builds a Bitfinex ticker symbol for a currency pair.
+   * Bitfinex requires a colon separator when either symbol is longer than 3 characters
+   * (e.g. tXAUT:USD instead of tXAUTUSD).
+   * @param {string} from - Base currency (e.g. 'BTC', 'XAUT')
+   * @param {string} to - Quote currency (e.g. 'USD')
+   * @returns {string} Bitfinex ticker symbol (e.g. 'tBTCUSD', 'tXAUT:USD')
+   */
+  _tickerFor (from, to) {
+    const f = from.toUpperCase()
+    const t = to.toUpperCase()
+    if (f.length > 3 || t.length > 3) {
+      return `t${f}:${t}`
+    }
+    return `t${f}${t}`
+  }
+
+  /**
    * @param {PricePair[]} list - Array of currency pairs
    * @returns {Promise<number[]>} Array of prices in the same order as input pairs
    */
   async getMultiCurrentPrices (list) {
-    const symbols = list
-      .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
-      .join(',')
+    const symbols = list.map((p) => this._tickerFor(p.from, p.to)).join(',')
 
     const response = await this.client.get(`/tickers?symbols=${symbols}`)
 
@@ -80,10 +95,7 @@ export class BitfinexPricingClient extends PricingClient {
       priceBySymbol.set(ticker[SYMBOL_INDEX], ticker[LAST_PRICE_INDEX])
     }
 
-    return list.map((p) => {
-      const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
-      return priceBySymbol.get(symbol)
-    })
+    return list.map((p) => priceBySymbol.get(this._tickerFor(p.from, p.to)))
   }
 
   /**
@@ -93,9 +105,7 @@ export class BitfinexPricingClient extends PricingClient {
    * @returns {Promise<PriceData[]>} Price data in the same order as input pairs
    */
   async getMultiPriceData (list) {
-    const symbols = list
-      .map((p) => `t${p.from.toUpperCase()}${p.to.toUpperCase()}`)
-      .join(',')
+    const symbols = list.map((p) => this._tickerFor(p.from, p.to)).join(',')
 
     const response = await this.client.get(`/tickers?symbols=${symbols}`)
 
@@ -113,10 +123,7 @@ export class BitfinexPricingClient extends PricingClient {
       })
     }
 
-    return list.map((p) => {
-      const symbol = `t${p.from.toUpperCase()}${p.to.toUpperCase()}`
-      return priceDataBySymbol.get(symbol)
-    })
+    return list.map((p) => priceDataBySymbol.get(this._tickerFor(p.from, p.to)))
   }
 
   /**
@@ -143,7 +150,7 @@ export class BitfinexPricingClient extends PricingClient {
     // Bitfinex returns data rounded to 1 hour, results are always in descending order
     while (Math.abs(cursor - start) > 3600000) {
       const response = await this.client.get(
-        `/tickers/hist?symbols=t${from}${to}&limit=100&start=${start}&end=${cursor}`
+        `/tickers/hist?symbols=${this._tickerFor(from, to)}&limit=100&start=${start}&end=${cursor}`
       )
 
       if (!response.data.length) {

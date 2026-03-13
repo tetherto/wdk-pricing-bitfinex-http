@@ -132,6 +132,36 @@ describe('BitfinexPricingClient', () => {
 
       expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
     })
+
+    it('should use colon separator for symbols longer than 3 characters', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tXAUT:USD', 163000, 100, 164000, 100, 12, 0.003, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([{ from: 'XAUT', to: 'USD' }])
+
+      expect(prices).toEqual([2700.5])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tXAUT:USD')
+    })
+
+    it('should mix colon and non-colon tickers in the same batch', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 65000, 14480, 66000, 64000],
+          ['tXAUT:USD', 163000, 100, 164000, 100, 12, 0.003, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([
+        { from: 'BTC', to: 'USD' },
+        { from: 'XAUT', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([65000, 2700.5])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD,tXAUT:USD')
+    })
   })
 
   describe('getHistoricalPrice', () => {
@@ -282,6 +312,21 @@ describe('BitfinexPricingClient', () => {
       await client.getMultiPriceData([{ from: 'btc', to: 'usd' }])
 
       expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+
+    it('should use colon separator for symbols longer than 3 characters', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tXAUT:USD', 163000, 100, 164000, 100, 15.5, 0.006, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const result = await client.getMultiPriceData([{ from: 'XAUT', to: 'USD' }])
+
+      expect(result).toEqual([
+        { lastPrice: 2700.5, dailyChange: 15.5, dailyChangeRelative: 0.006 }
+      ])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tXAUT:USD')
     })
   })
 })
