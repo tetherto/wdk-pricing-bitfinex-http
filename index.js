@@ -1,4 +1,3 @@
-'use strict'
 // Copyright 2024 Tether Operations Limited
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
+
+'use strict'
 
 import { PricingClient } from '@tetherto/wdk-pricing-provider'
 import axios from 'axios'
