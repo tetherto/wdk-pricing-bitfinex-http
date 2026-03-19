@@ -74,6 +74,96 @@ describe('BitfinexPricingClient', () => {
     })
   })
 
+  describe('getMultiCurrentPrices', () => {
+    it('should return prices for multiple pairs from Bitfinex tickers API', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000.12345, 14480, 166000, 162000],
+          ['tETHUSD', 3000, 200, 3010, 200, 50, 0.02, 3005.6789, 50000, 3100, 2900]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([165000.12345, 3005.6789])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD,tETHUSD')
+    })
+
+    it('should handle single pair', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([{ from: 'BTC', to: 'USD' }])
+
+      expect(prices).toEqual([165000])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+
+    it('should preserve input order when API returns different order', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tETHUSD', 3000, 200, 3010, 200, 50, 0.02, 3005, 50000, 3100, 2900],
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([165000, 3005])
+    })
+
+    it('should convert currency codes to uppercase', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      await client.getMultiCurrentPrices([{ from: 'btc', to: 'usd' }])
+
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+
+    it('should use colon separator for symbols longer than 3 characters', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tXAUT:USD', 163000, 100, 164000, 100, 12, 0.003, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([{ from: 'XAUT', to: 'USD' }])
+
+      expect(prices).toEqual([2700.5])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tXAUT:USD')
+    })
+
+    it('should mix colon and non-colon tickers in the same batch', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731, 0.07, 65000, 14480, 66000, 64000],
+          ['tXAUT:USD', 163000, 100, 164000, 100, 12, 0.003, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const prices = await client.getMultiCurrentPrices([
+        { from: 'BTC', to: 'USD' },
+        { from: 'XAUT', to: 'USD' }
+      ])
+
+      expect(prices).toEqual([65000, 2700.5])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD,tXAUT:USD')
+    })
+  })
+
   describe('getHistoricalPrice', () => {
     const mockHistoricalData = [
       // Format: [SYMBOL, BID, BIDSIZE, ASK, ASKSIZE, DAILY_CHANGE, DAILY_CHANGE_RELATIVE, LAST_PRICE, VOLUME, HIGH, LOW, MTS]
@@ -106,12 +196,7 @@ describe('BitfinexPricingClient', () => {
 
       mockGet.mockReset().mockResolvedValueOnce({ data: alignedHistoricalData }).mockResolvedValueOnce({ data: [] })
 
-      const result = await client.getHistoricalPrice({
-        from: 'BTC',
-        to: 'USD',
-        start,
-        end
-      })
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start, end })
 
       expect(result).toEqual([
         { price: 164000, ts: end },
@@ -129,12 +214,7 @@ describe('BitfinexPricingClient', () => {
       const tooOld = now - (366 * 24 * 60 * 60000)
 
       await expect(
-        client.getHistoricalPrice({
-          from: 'BTC',
-          to: 'USD',
-          start: tooOld,
-          end: now
-        })
+        client.getHistoricalPrice('BTC', 'USD', { start: tooOld, end: now })
       ).rejects.toThrow('Start date should be within last 365 days')
     })
 
@@ -163,15 +243,90 @@ describe('BitfinexPricingClient', () => {
         data: []
       })
 
-      const result = await client.getHistoricalPrice({
-        from: 'BTC',
-        to: 'USD',
-        start: end - (150 * 3600000),
-        end
-      })
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start: end - (150 * 3600000), end })
 
       expect(result.length).toBeLessThanOrEqual(client.MAX_HISTORICAL_ENTRIES)
       expect(result.length).toBe(75) // After one round of filtering (every other entry)
+    })
+  })
+
+  describe('getMultiPriceData', () => {
+    it('should return full price data for multiple pairs', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 731.5, 0.014, 165000.5, 14480, 166000, 162000],
+          ['tETHUSD', 2900, 200, 2910, 200, -50.25, -0.017, 3005.75, 50000, 3100, 2900]
+        ]
+      })
+
+      const result = await client.getMultiPriceData([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(result).toEqual([
+        { lastPrice: 165000.5, dailyChange: 731.5, dailyChangeRelative: 0.014 },
+        { lastPrice: 3005.75, dailyChange: -50.25, dailyChangeRelative: -0.017 }
+      ])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD,tETHUSD')
+    })
+
+    it('should return price data for a single pair', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 500, 0.01, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const result = await client.getMultiPriceData([{ from: 'BTC', to: 'USD' }])
+
+      expect(result).toEqual([
+        { lastPrice: 165000, dailyChange: 500, dailyChangeRelative: 0.01 }
+      ])
+    })
+
+    it('should preserve input order when API returns different order', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tETHUSD', 2900, 200, 2910, 200, -50, -0.016, 3005, 50000, 3100, 2900],
+          ['tBTCUSD', 163000, 100, 164000, 100, 1000, 0.02, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      const result = await client.getMultiPriceData([
+        { from: 'BTC', to: 'USD' },
+        { from: 'ETH', to: 'USD' }
+      ])
+
+      expect(result[0]).toEqual({ lastPrice: 165000, dailyChange: 1000, dailyChangeRelative: 0.02 })
+      expect(result[1]).toEqual({ lastPrice: 3005, dailyChange: -50, dailyChangeRelative: -0.016 })
+    })
+
+    it('should convert currency codes to uppercase', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tBTCUSD', 163000, 100, 164000, 100, 500, 0.01, 165000, 14480, 166000, 162000]
+        ]
+      })
+
+      await client.getMultiPriceData([{ from: 'btc', to: 'usd' }])
+
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tBTCUSD')
+    })
+
+    it('should use colon separator for symbols longer than 3 characters', async () => {
+      mockGet.mockReset().mockResolvedValue({
+        data: [
+          ['tXAUT:USD', 163000, 100, 164000, 100, 15.5, 0.006, 2700.5, 500, 2750, 2650]
+        ]
+      })
+
+      const result = await client.getMultiPriceData([{ from: 'XAUT', to: 'USD' }])
+
+      expect(result).toEqual([
+        { lastPrice: 2700.5, dailyChange: 15.5, dailyChangeRelative: 0.006 }
+      ])
+      expect(mockGet).toHaveBeenCalledWith('/tickers?symbols=tXAUT:USD')
     })
   })
 })
