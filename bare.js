@@ -11,10 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 'use strict'
 
-import 'bare-wdk-runtime'
+import 'bare-node-runtime/global'
 
-export * from './index.js' with { imports: 'bare-wdk-runtime/package' }
+export * from './index.js' with { imports: 'bare-node-runtime/imports' }
 
-export { BitfinexPricingClient } from './index.js' with { imports: 'bare-wdk-runtime/package' }
+export { BitfinexPricingClient } from './index.js' with { imports: 'bare-node-runtime/imports' }

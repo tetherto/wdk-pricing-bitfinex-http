@@ -1,20 +1,19 @@
 export class BitfinexPricingClient extends PricingClient {
+    /** @internal */
     HISTORICAL_DATA_AGE: number;
+    /** @internal */
     MAX_HISTORICAL_ENTRIES: number;
+    /** @internal */
     client: import("axios").AxiosInstance;
     /**
-     * Returns the recorded lowest ask (not trade) of the asset pair.
-     * Bitfinex only supports max 250 records per request.
-     * @async
-     * @param {HistoricalPriceOptions} opts
-     * @returns {Promise<HistoricalPriceResult[]>}
-     */
-    getHistoricalPrice(opts: HistoricalPriceOptions): Promise<HistoricalPriceResult[]>;
-    /**
-     * Cuts the results to the maximum number of entries.
+     * @internal
      * @param {HistoricalPriceResult[]} results
      * @returns {HistoricalPriceResult[]}
      */
     _cappedToMaxResults(results: HistoricalPriceResult[]): HistoricalPriceResult[];
 }
-import { PricingClient } from 'wdk-pricing-provider';
+export type PricePair = import("@tetherto/wdk-pricing-provider").PricePair;
+export type HistoricalPriceOptions = import("@tetherto/wdk-pricing-provider").HistoricalPriceOptions;
+export type HistoricalPriceResult = import("@tetherto/wdk-pricing-provider").HistoricalPriceResult;
+export type PriceData = import("@tetherto/wdk-pricing-provider").PriceData;
+import { PricingClient } from '@tetherto/wdk-pricing-provider';
