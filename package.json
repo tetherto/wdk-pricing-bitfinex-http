@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@tetherto/wdk-pricing-provider": "1.0.0-beta.2",
-    "axios": "1.12.2",
+    "axios": "1.15.0",
     "bare-node-runtime": "^1.2.0"
   },
   "devDependencies": {
