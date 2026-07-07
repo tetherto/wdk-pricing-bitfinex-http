@@ -14,7 +14,6 @@ This module is part of the WDK (Wallet Development Kit) project. Learn more at h
 
 - Compatible with [@tetherto/wdk-pricing-provider](https://github.com/tetherto/wdk-pricing-provider)
 - Fetch current price for given ticker (single or batch) via the Bitfinex FX endpoint
-- Converts to fiat currencies Bitfinex does not quote directly (e.g. BRL, ARS, MXN) by pivoting through USD using its fiat FX rates
 - Fetch historical prices given ticker
 - Downscales long history to max 100 points
 
@@ -69,35 +68,30 @@ Parameters:
 
 #### `getCurrentPrice(base, quote)`
 
-Uses the Bitfinex `/calc/fx/batch` endpoint. If Bitfinex cannot quote the pair
-directly (typically a fiat currency it does not list), it falls back to a
-two-leg conversion through USD: `base → USD → quote`. Returns `null` if the
-pair cannot be resolved even through the pivot.
+Uses the Bitfinex `/calc/fx/batch` endpoint. Returns `null` if Bitfinex cannot
+quote the pair directly (typically a fiat currency it does not list).
 
 ```javascript
 const price = await client.getCurrentPrice("BTC", "USD");
-const brl = await client.getCurrentPrice("BTC", "BRL"); // resolved via USD pivot
 ```
 
 #### `getMultiCurrentPrices(pairs)`
 
-Resolves many pairs in a single batch request, applying the same USD-pivot
-fallback per pair. Results are returned in the same order as the input; a pair
-that cannot be resolved even through the pivot is `null`.
+Resolves many pairs in a single batch request. Results are returned in the same
+order as the input; a pair Bitfinex cannot quote directly is `null`.
 
 ```javascript
 const prices = await client.getMultiCurrentPrices([
   { from: "BTC", to: "USD" },
-  { from: "ETH", to: "BRL" },
+  { from: "ETH", to: "USD" },
 ]);
 ```
 
 #### `getMultiPriceData(pairs)`
 
 Returns the last price plus 24h absolute and relative change for each pair, from
-the Bitfinex `/tickers` endpoint. Unlike the methods above, it does **not** use
-the USD pivot, so a currency Bitfinex does not quote directly resolves to
-`null`. Results are returned in the same order as the input.
+the Bitfinex `/tickers` endpoint. A currency Bitfinex does not quote directly
+resolves to `null`. Results are returned in the same order as the input.
 
 ```javascript
 const data = await client.getMultiPriceData([{ from: "BTC", to: "USD" }]);
@@ -119,15 +113,11 @@ const series = await client.getHistoricalPrice("BTC", "USD");
   `USDT`), and some fiats are only available as tokenized assets such as `CNHT`
   or `MXNT`. Unknown codes resolve to `null`. The full list is at
   `https://api-pub.bitfinex.com/v2/conf/pub:list:currency`.
-- **The USD pivot only applies to current prices.** `getCurrentPrice` and
-  `getMultiCurrentPrices` fall back to a `from → USD → to` conversion for fiat
-  Bitfinex does not quote directly. `getHistoricalPrice` does **not** — it
-  returns an empty array for such pairs (Bitfinex has no historical FX series
-  for them).
-- **`getMultiPriceData` does not support pivot currencies.** It sources last
-  price and daily change from `/tickers`, which only exists for natively quoted
-  pairs. For a currency that requires the USD pivot (e.g. BRL, ARS) it returns
-  `null` for that entry.
+- **Only pairs Bitfinex quotes directly are supported.** Fiat currencies
+  Bitfinex does not quote (e.g. BRL, ARS) resolve to `null` in
+  `getCurrentPrice`, `getMultiCurrentPrices`, and `getMultiPriceData`, and
+  `getHistoricalPrice` returns an empty array for them (Bitfinex has no
+  historical FX series for such pairs).
 
 ## 🛠️ Development
 

@@ -71,22 +71,10 @@ describe('BitfinexPricingClient', () => {
       })
     })
 
-    it('should fall back to a USD pivot for currencies Bitfinex cannot quote directly', async () => {
-      mockPost
-        .mockReset()
-        .mockResolvedValueOnce({ data: [null] }) // direct BTC->BRL not supported
-        .mockResolvedValueOnce({ data: [165000, 5.0605] }) // BTC->USD, USD->BRL
-
-      const price = await client.getCurrentPrice('BTC', 'BRL')
-
-      expect(price).toBe(165000 * 5.0605)
-    })
-
     it('should return null (not undefined) when a pair cannot be resolved', async () => {
       mockPost
         .mockReset()
-        .mockResolvedValueOnce({ data: [null] }) // direct BTC->XYZ not supported
-        .mockResolvedValueOnce({ data: [165000, null] }) // USD->XYZ not supported either
+        .mockResolvedValueOnce({ data: [null] }) // BTC->XYZ not supported
 
       const price = await client.getCurrentPrice('BTC', 'XYZ')
 
@@ -140,52 +128,25 @@ describe('BitfinexPricingClient', () => {
       }, expect.anything())
     })
 
-    it('should fall back to a USD pivot only for the pairs Bitfinex cannot quote directly', async () => {
+    it('should return null for pairs Bitfinex cannot quote directly without extra requests', async () => {
       mockPost
         .mockReset()
-        // direct attempt: BTC->USD ok, BTC->BRL not supported (null)
+        // BTC->USD ok, BTC->BRL not supported (null)
         .mockResolvedValueOnce({ data: [165000, null] })
-        // pivot attempt for BTC->BRL: BTC->USD, USD->BRL
-        .mockResolvedValueOnce({ data: [165000, 5.0605] })
 
       const prices = await client.getMultiCurrentPrices([
         { from: 'BTC', to: 'USD' },
         { from: 'BTC', to: 'BRL' }
       ])
 
-      expect(prices).toEqual([165000, 165000 * 5.0605])
-
-      expect(mockPost).toHaveBeenNthCalledWith(1, '/calc/fx/batch', {
-        pairs: [
-          { ccy1: 'BTC', ccy2: 'USD', amount: 1 },
-          { ccy1: 'BTC', ccy2: 'BRL', amount: 1 }
-        ]
-      }, expect.anything())
-
-      expect(mockPost).toHaveBeenNthCalledWith(2, '/calc/fx/batch', {
-        pairs: [
-          { ccy1: 'BTC', ccy2: 'USD', amount: 1 },
-          { ccy1: 'USD', ccy2: 'BRL', fiat_fx: 1, amount: 1 }
-        ]
-      }, expect.anything())
-    })
-
-    it('should not make a second request when every pair converts directly', async () => {
-      mockPost.mockReset().mockResolvedValue({ data: [165000, 3005] })
-
-      await client.getMultiCurrentPrices([
-        { from: 'BTC', to: 'USD' },
-        { from: 'ETH', to: 'USD' }
-      ])
-
+      expect(prices).toEqual([165000, null])
       expect(mockPost).toHaveBeenCalledTimes(1)
     })
 
-    it('should return null when even the USD pivot cannot resolve a pair', async () => {
+    it('should return null when a pair cannot be resolved at all', async () => {
       mockPost
         .mockReset()
-        .mockResolvedValueOnce({ data: [null] }) // direct BTC->XYZ not supported
-        .mockResolvedValueOnce({ data: [165000, null] }) // USD->XYZ not supported either
+        .mockResolvedValueOnce({ data: [null] }) // BTC->XYZ not supported
 
       const prices = await client.getMultiCurrentPrices([{ from: 'BTC', to: 'XYZ' }])
 

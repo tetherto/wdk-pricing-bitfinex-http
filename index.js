@@ -49,14 +49,7 @@ export class BitfinexPricingClient extends PricingClient {
     return price ?? null
   }
 
-  /**
-   * Posts a batch of FX conversion requests to Bitfinex and returns the
-   * resulting rates in the same order as the input pairs. Bitfinex returns
-   * `null` for any pair it cannot convert directly.
-   * @private
-   * @param {Array<{ ccy1: string, ccy2: string, fiat_fx?: number, amount?: number }>} pairs
-   * @returns {Promise<Array<number|null>>}
-   */
+  /** @private */
   async _fxBatch (pairs) {
     const response = await this.client.post(
       '/calc/fx/batch',
@@ -92,52 +85,18 @@ export class BitfinexPricingClient extends PricingClient {
   /**
    * Fetches the current conversion rate for multiple currency pairs in a single
    * batch request. Pairs that Bitfinex cannot convert directly (typically fiat
-   * currencies it does not quote, e.g. BRL or ARS) fall back to a two-leg
-   * conversion through USD using its fiat FX rates: `from -> USD -> to`.
+   * currencies it does not quote, e.g. BRL or ARS) resolve to `null`.
    * @param {PricePair[]} list - Array of currency pairs
    * @returns {Promise<Array<number|null>>} Prices in the same order as input pairs; `null` for pairs that cannot be resolved
    */
   async getMultiCurrentPrices (list) {
-    const direct = await this._fxBatch(
+    return this._fxBatch(
       list.map((p) => ({
         ccy1: p.from.toUpperCase(),
         ccy2: p.to.toUpperCase(),
         amount: 1
       }))
     )
-
-    const pivotIndexes = []
-    direct.forEach((price, index) => {
-      if (price == null) {
-        pivotIndexes.push(index)
-      }
-    })
-
-    if (pivotIndexes.length === 0) {
-      return direct
-    }
-
-    // Fall back to converting through USD for pairs Bitfinex cannot quote
-    // directly. Each pair contributes two legs: `from -> USD` and `USD -> to`,
-    // the latter using fiat FX rates.
-    const pivotPairs = []
-    for (const index of pivotIndexes) {
-      const p = list[index]
-      pivotPairs.push({ ccy1: p.from.toUpperCase(), ccy2: 'USD', amount: 1 })
-      pivotPairs.push({ ccy1: 'USD', ccy2: p.to.toUpperCase(), fiat_fx: 1, amount: 1 })
-    }
-
-    const pivot = await this._fxBatch(pivotPairs)
-
-    const prices = [...direct]
-    pivotIndexes.forEach((listIndex, n) => {
-      const fromUsd = pivot[n * 2]
-      const usdTo = pivot[n * 2 + 1]
-      prices[listIndex] =
-        fromUsd == null || usdTo == null ? null : fromUsd * usdTo
-    })
-
-    return prices
   }
 
   /**
