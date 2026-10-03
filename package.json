@@ -1,6 +1,6 @@
 {
   "name": "@tetherto/wdk-pricing-bitfinex-http",
-  "version": "1.0.0-beta.5",
+  "version": "1.0.0-beta.6",
   "description": "Bitfinex HTTP pricing client for WDK (Wallet Development Kit) by Tether.",
   "homepage": "https://docs.wdk.tether.io/tools/price-rates/",
   "keywords": [
