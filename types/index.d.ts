@@ -10,6 +10,8 @@ export class BitfinexPricingClient extends PricingClient {
     /** @private */
     private MAX_HISTORICAL_ENTRIES;
     /** @private */
+    private MAX_HISTORICAL_PAGES;
+    /** @private */
     private client;
     /** @private */
     private _currencyCodes;
