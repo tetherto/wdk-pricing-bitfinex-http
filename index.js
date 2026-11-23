@@ -87,6 +87,9 @@ export class BitfinexPricingClient extends PricingClient {
   /** @private */
   MAX_HISTORICAL_ENTRIES = 100
 
+  /** @private */
+  MAX_HISTORICAL_PAGES = 100
+
   /**
    * Creates a Bitfinex pricing client.
    *
@@ -242,7 +245,7 @@ export class BitfinexPricingClient extends PricingClient {
    */
   async getHistoricalPrice (from, to, opts = {}) {
     if (
-      opts.start &&
+      opts.start != null &&
       opts.start < new Date().getTime() - this.HISTORICAL_DATA_AGE
     ) {
       throw new Error('Start date should be within last 365 days')
@@ -255,9 +258,12 @@ export class BitfinexPricingClient extends PricingClient {
     const results = []
 
     let cursor = end
+    let pages = 0
 
     // Bitfinex returns data rounded to 1 hour, results are always in descending order
-    while (Math.abs(cursor - start) > 3600000) {
+    while (Math.abs(cursor - start) > 3600000 && pages < this.MAX_HISTORICAL_PAGES) {
+      pages++
+
       const response = await this.client.get(
         `/tickers/hist?symbols=${ticker}&limit=100&start=${start}&end=${cursor}`
       )
@@ -274,6 +280,10 @@ export class BitfinexPricingClient extends PricingClient {
       )
 
       const resultStart = response.data[response.data.length - 1][12]
+
+      if (!(resultStart < cursor)) {
+        break
+      }
 
       cursor = resultStart
     }

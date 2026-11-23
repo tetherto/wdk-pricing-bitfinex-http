@@ -491,6 +491,60 @@ describe('BitfinexPricingClient', () => {
       )
     })
 
+    it('should throw error if start date is zero', async () => {
+      await expect(
+        client.getHistoricalPrice('BTC', 'USD', { start: 0, end: new Date().getTime() })
+      ).rejects.toThrow('Start date should be within last 365 days')
+
+      expect(mockGet).not.toHaveBeenCalled()
+    })
+
+    it('should stop paging when the last row does not move back in time', async () => {
+      const now = new Date().getTime()
+      const end = now - (now % 3600000)
+      const start = end - (24 * 3600000)
+
+      mockGet.mockReset().mockResolvedValue({ data: [['tBTCUSD', 163000, 1, 164000, 0, 0, 0, 0, 0, 0, 0, 0, end]] })
+
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start, end })
+
+      expect(result).toEqual([{ price: 164000, ts: end }])
+      expect(mockGet).toHaveBeenCalledTimes(1)
+      expect(mockGet).toHaveBeenCalledWith(`/tickers/hist?symbols=tBTCUSD&limit=100&start=${start}&end=${end}`)
+    })
+
+    it('should stop paging when the last row moves forward in time', async () => {
+      const now = new Date().getTime()
+      const end = now - (now % 3600000)
+      const start = end - (24 * 3600000)
+
+      mockGet.mockReset().mockResolvedValue({ data: [['tBTCUSD', 163000, 1, 164000, 0, 0, 0, 0, 0, 0, 0, 0, end + 3600000]] })
+
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start, end })
+
+      expect(result).toEqual([{ price: 164000, ts: end + 3600000 }])
+      expect(mockGet).toHaveBeenCalledTimes(1)
+      expect(mockGet).toHaveBeenCalledWith(`/tickers/hist?symbols=tBTCUSD&limit=100&start=${start}&end=${end}`)
+    })
+
+    it('should stop paging after 100 pages', async () => {
+      const now = new Date().getTime()
+      const end = now - (now % 3600000)
+      const start = end - (24 * 3600000)
+
+      mockGet.mockReset().mockImplementation(async (url) => {
+        const cursor = Number(new URLSearchParams(url.split('?')[1]).get('end'))
+
+        return { data: [['tBTCUSD', 163000, 1, 164000, 0, 0, 0, 0, 0, 0, 0, 0, cursor - 1]] }
+      })
+
+      const result = await client.getHistoricalPrice('BTC', 'USD', { start, end })
+
+      expect(mockGet).toHaveBeenCalledTimes(100)
+      expect(mockGet).toHaveBeenLastCalledWith(`/tickers/hist?symbols=tBTCUSD&limit=100&start=${start}&end=${end - 99}`)
+      expect(result.length).toBe(100)
+    })
+
     it('should cap results to MAX_HISTORICAL_ENTRIES', async () => {
       // Create mock data with more than MAX_HISTORICAL_ENTRIES
       const now = new Date().getTime()
